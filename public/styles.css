@@ -1,0 +1,73 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.card {
+    width: 80%; /* Increase the width of the chat box */
+    margin-top: 50px;
+    background-color: #fff; /* Set default background color */
+}
+
+.card-footer {
+    width: 25%; /* Decrease the width of the online users box */
+    margin-top: 25px;
+    position: fixed; /* Make the online users box fixed */
+    top: 20px; /* Adjust top position */
+    right: 20px; /* Adjust right position */
+}
+
+#messages {
+    max-height: 550px;
+    overflow-y: auto;
+}
+
+#messages li {
+    margin-bottom: 10px;
+}
+
+#typing-indicator {
+    display: none;
+}
+
+.list-group-item.italic {
+    font-style: italic;
+}
+
+.custom-file-label::after {
+    content: "Choose file";
+}
+
+#messages img,
+#messages video {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Light mode styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f6f6f6; /* Light mode background color */
+    color: #000; /* Light mode text color */
+}
+
+.card-footer {
+    background-color: #f1f1f1; /* Light mode card footer background color */
+}
+
+/* Dark mode styles */
+body.dark-mode {
+    background-color: #343a40; /* Dark mode background color */
+    color: #f6f6f6; /* Dark mode text color */
+}
+
+body.dark-mode .card,
+body.dark-mode .card-footer {
+    background-color: #212529; /* Dark mode card and card footer background color */
+    color: #000000; /* Dark mode text color */
+}

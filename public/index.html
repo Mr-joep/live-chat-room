@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Chat Room</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header text-center">
+                <h1 id="chat-room-title">Live Chat Room</h1>
+            </div>
+            <div class="card-body">
+                <input id="username-input" class="form-control mb-3" placeholder="Enter your username" />
+                <ul id="messages" class="list-group"></ul>
+                <input id="message-input" class="form-control mt-3" placeholder="Type a message..." autocomplete="off" />
+                <button class="btn btn-primary mt-2" onclick="sendMessage()">Send</button>
+                <div class="custom-file mt-2">
+                    <input type="file" class="custom-file-input" id="image-input" accept="image/*" onchange="handleImageUpload(event)">
+                    <label class="custom-file-label" for="image-input">Choose image</label>
+                </div>
+                <div class="custom-file mt-2">
+                    <input type="file" class="custom-file-input" id="video-input" accept="video/*" onchange="handleVideoUpload(event)">
+                    <label class="custom-file-label" for="video-input">Choose video</label>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <h5>Online Users</h5>
+            <ul id="users-list" class="list-group"></ul>
+            <button id="toggle-theme-btn" class="btn btn-secondary mt-3">Toggle Theme</button>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+    <script src="theme.js"></script>
+</body>
+</html>
