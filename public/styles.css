@@ -31,10 +31,6 @@ body {
     margin-bottom: 10px;
 }
 
-#typing-indicator {
-    display: none;
-}
-
 .list-group-item.italic {
     font-style: italic;
 }

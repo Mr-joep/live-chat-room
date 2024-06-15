@@ -102,10 +102,6 @@ socket.on('user left', (data) => {
     scrollToBottom();
 });
 
-socket.on('typing', (username) => {
-    showTypingIndicator(username);
-});
-
 function updateOnlineUsers(users) {
     const usersList = document.getElementById('users-list');
     usersList.innerHTML = '';
@@ -116,21 +112,6 @@ function updateOnlineUsers(users) {
         usersList.appendChild(item);
     });
 }
-
-function showTypingIndicator(username) {
-    const typingIndicator = document.getElementById('typing-indicator');
-    typingIndicator.textContent = `${username} is typing...`;
-    typingIndicator.style.display = 'block';
-}
-
-function hideTypingIndicator() {
-    const typingIndicator = document.getElementById('typing-indicator');
-    typingIndicator.style.display = 'none';
-}
-
-document.getElementById('message-input').addEventListener('blur', () => {
-    hideTypingIndicator();
-});
 
 function scrollToBottom() {
     const messagesContainer = document.getElementById('messages');

@@ -7,7 +7,6 @@ const multer = require('multer');
 const bodyParser = require('body-parser');
 const csv = require('csv-parser');
 const bcrypt = require('bcrypt');
-
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
@@ -157,10 +156,6 @@ io.on('connection', (socket) => {
             io.emit('video message', message);
             saveChatMessages(); // Save messages to CSV file
         });
-    });
-
-    socket.on('typing', () => {
-        socket.broadcast.emit('typing', socket.username);
     });
 
     socket.on('disconnect', () => {
