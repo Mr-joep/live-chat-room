@@ -3,30 +3,13 @@ const http = require('http');
 const socketIo = require('socket.io');
 const fs = require('fs');
 const path = require('path');
-const multer = require('multer');
 const bodyParser = require('body-parser');
 const csv = require('csv-parser');
 const bcrypt = require('bcrypt');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
-
-// Set up storage for images and videos using multer
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, 'images');
-        } else if (file.mimetype.startsWith('video/')) {
-            cb(null, 'videos');
-        }
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({ storage: storage });
+const { upload, saveImage, saveVideo } = require('./upload'); // Import the upload and save functions
 
 app.use(express.static('public'));
 app.use('/images', express.static('images'));
@@ -35,7 +18,19 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 let users = [];
-let chatMessages = []; // Array to store chat messages
+let chatMessages = [];
+
+// Function to read users from CSV
+function readUsersFromCSV() {
+    return new Promise((resolve, reject) => {
+        const users = [];
+        fs.createReadStream('username.csv')
+            .pipe(csv(['username', 'password']))
+            .on('data', (row) => users.push(row))
+            .on('end', () => resolve(users))
+            .on('error', (err) => reject(err));
+    });
+}
 
 // Serve main page
 app.get('/', (req, res) => {
@@ -57,51 +52,43 @@ app.get('/register', (req, res) => {
     res.sendFile(__dirname + '/public/register.html');
 });
 
-app.post('/register', (req, res) => {
+app.post('/register', async (req, res) => {
     const { username, password } = req.body;
 
-    let usernameExists = false;
-    fs.createReadStream('username.csv')
-        .pipe(csv(['username', 'password']))
-        .on('data', (row) => {
-            if (row.username === username) {
-                usernameExists = true;
+    try {
+        const users = await readUsersFromCSV();
+        if (users.some(user => user.username === username)) {
+            return res.status(400).send('Username already exists');
+        }
+
+        const hashedPassword = bcrypt.hashSync(password, 10);
+        fs.appendFile('username.csv', `${username},${hashedPassword}\n`, (err) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).send('Error registering user');
             }
-        })
-        .on('end', () => {
-            if (usernameExists) {
-                res.status(400).send('Username already exists');
-            } else {
-                const hashedPassword = bcrypt.hashSync(password, 10);
-                fs.appendFile('username.csv', `${username},${hashedPassword}\n`, (err) => {
-                    if (err) {
-                        console.error(err);
-                        res.status(500).send('Error registering user');
-                    } else {
-                        res.status(200).send('User registered successfully');
-                    }
-                });
-            }
+            res.status(200).send('User registered successfully');
         });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Internal server error');
+    }
 });
 
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
     const { username, password } = req.body;
-    const users = [];
 
-    fs.createReadStream('username.csv')
-        .pipe(csv(['username', 'password']))
-        .on('data', (row) => {
-            users.push(row);
-        })
-        .on('end', () => {
-            const user = users.find((u) => u.username === username);
-            if (user && bcrypt.compareSync(password, user.password)) {
-                res.status(200).send('Login successful');
-            } else {
-                res.status(401).send('Invalid username or password');
-            }
-        });
+    try {
+        const users = await readUsersFromCSV();
+        const user = users.find(user => user.username === username);
+        if (user && bcrypt.compareSync(password, user.password)) {
+            return res.status(200).send('Login successful');
+        }
+        res.status(401).send('Invalid username or password');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Internal server error');
+    }
 });
 
 io.on('connection', (socket) => {
@@ -109,6 +96,11 @@ io.on('connection', (socket) => {
     const ipAddress = socket.handshake.address; // Capture the IP address of the connected user
 
     socket.on('join', (username) => {
+        if (users.includes(username)) {
+            socket.emit('error', 'Username is already taken');
+            return;
+        }
+
         socket.username = username;
         users.push(username);
         io.emit('user joined', { username, users });
@@ -123,16 +115,9 @@ io.on('connection', (socket) => {
     });
 
     socket.on('image message', (data) => {
-        const base64Data = data.image.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const imagePath = `images/${uniqueSuffix}.png`;
+        saveImage(data, (err, imagePath) => {
+            if (err) return;
 
-        fs.writeFile(imagePath, buffer, (err) => {
-            if (err) {
-                console.error('Error saving image:', err);
-                return;
-            }
             const message = { username: data.username, message: '(Image)', image: imagePath, ip: ipAddress };
             chatMessages.push(message); // Add message to array
             io.emit('image message', message);
@@ -141,16 +126,9 @@ io.on('connection', (socket) => {
     });
 
     socket.on('video message', (data) => {
-        const base64Data = data.video.replace(/^data:video\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const videoPath = `videos/${uniqueSuffix}.mp4`;
+        saveVideo(data, (err, videoPath) => {
+            if (err) return;
 
-        fs.writeFile(videoPath, buffer, (err) => {
-            if (err) {
-                console.error('Error saving video:', err);
-                return;
-            }
             const message = { username: data.username, message: '(Video)', video: videoPath, ip: ipAddress };
             chatMessages.push(message); // Add message to array
             io.emit('video message', message);
@@ -164,6 +142,7 @@ io.on('connection', (socket) => {
         io.emit('user left', { username: socket.username, users });
     });
 });
+
 
 function saveChatMessages() {
     const csvContent = chatMessages.map(message => {
