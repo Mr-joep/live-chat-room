@@ -1,56 +1,45 @@
-const multer = require('multer');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
 
-// Set up storage for images and videos using multer
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, 'images');
-        } else if (file.mimetype.startsWith('video/')) {
-            cb(null, 'videos');
-        }
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({ storage: storage });
-
-function saveImage(data, callback) {
+function handleImageMessage(data, chatMessages, io, ipAddress) {
     const base64Data = data.image.replace(/^data:image\/\w+;base64,/, '');
     const buffer = Buffer.from(base64Data, 'base64');
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const imagePath = `images/${uniqueSuffix}.png`;
 
-    fs.writeFile(imagePath, buffer, (err) => {
+    fs.writeFile(path.join(__dirname, imagePath), buffer, (err) => {
         if (err) {
             console.error('Error saving image:', err);
-            return callback(err);
+            return;
         }
-        callback(null, imagePath);
+        const message = { username: data.username, message: '(Image)', image: imagePath, ip: ipAddress };
+        chatMessages.push(message); // Add message to array
+        io.emit('image message', message);
+        // Save messages to CSV file (if needed)
+        // saveChatMessages(chatMessages);
     });
 }
 
-function saveVideo(data, callback) {
+function handleVideoMessage(data, chatMessages, io, ipAddress) {
     const base64Data = data.video.replace(/^data:video\/\w+;base64,/, '');
     const buffer = Buffer.from(base64Data, 'base64');
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const videoPath = `videos/${uniqueSuffix}.mp4`;
 
-    fs.writeFile(videoPath, buffer, (err) => {
+    fs.writeFile(path.join(__dirname, videoPath), buffer, (err) => {
         if (err) {
             console.error('Error saving video:', err);
-            return callback(err);
+            return;
         }
-        callback(null, videoPath);
+        const message = { username: data.username, message: '(Video)', video: videoPath, ip: ipAddress };
+        chatMessages.push(message); // Add message to array
+        io.emit('video message', message);
+        // Save messages to CSV file (if needed)
+        // saveChatMessages(chatMessages);
     });
 }
 
 module.exports = {
-    upload,
-    saveImage,
-    saveVideo
+    handleImageMessage,
+    handleVideoMessage
 };
