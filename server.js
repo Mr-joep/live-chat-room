@@ -4,6 +4,9 @@ const socketIo = require('socket.io');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const bodyParser = require('body-parser');
+const csv = require('csv-parser');
+const bcrypt = require('bcrypt');
 
 const app = express();
 const server = http.createServer(app);
@@ -29,9 +32,78 @@ const upload = multer({ storage: storage });
 app.use(express.static('public'));
 app.use('/images', express.static('images'));
 app.use('/videos', express.static('videos'));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 let users = [];
 let chatMessages = []; // Array to store chat messages
+
+// Serve main page
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/public/index.html');
+});
+
+// Serve login page
+app.get('/login.html', (req, res) => {
+    res.sendFile(__dirname + '/public/login.html');
+});
+
+// Serve chat page
+app.get('/chat', (req, res) => {
+    res.sendFile(__dirname + '/public/index.html');
+});
+
+// Serve register page
+app.get('/register', (req, res) => {
+    res.sendFile(__dirname + '/public/register.html');
+});
+
+app.post('/register', (req, res) => {
+    const { username, password } = req.body;
+
+    let usernameExists = false;
+    fs.createReadStream('username.csv')
+        .pipe(csv(['username', 'password']))
+        .on('data', (row) => {
+            if (row.username === username) {
+                usernameExists = true;
+            }
+        })
+        .on('end', () => {
+            if (usernameExists) {
+                res.status(400).send('Username already exists');
+            } else {
+                const hashedPassword = bcrypt.hashSync(password, 10);
+                fs.appendFile('username.csv', `${username},${hashedPassword}\n`, (err) => {
+                    if (err) {
+                        console.error(err);
+                        res.status(500).send('Error registering user');
+                    } else {
+                        res.status(200).send('User registered successfully');
+                    }
+                });
+            }
+        });
+});
+
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    const users = [];
+
+    fs.createReadStream('username.csv')
+        .pipe(csv(['username', 'password']))
+        .on('data', (row) => {
+            users.push(row);
+        })
+        .on('end', () => {
+            const user = users.find((u) => u.username === username);
+            if (user && bcrypt.compareSync(password, user.password)) {
+                res.status(200).send('Login successful');
+            } else {
+                res.status(401).send('Invalid username or password');
+            }
+        });
+});
 
 io.on('connection', (socket) => {
     console.log('a user connected');
@@ -41,6 +113,7 @@ io.on('connection', (socket) => {
         socket.username = username;
         users.push(username);
         io.emit('user joined', { username, users });
+        saveIpAddress(username, ipAddress); // Save the user's IP address to a CSV file
     });
 
     socket.on('chat message', (msg) => {
@@ -112,6 +185,17 @@ function saveChatMessages() {
             console.error('Error writing to CSV file:', err);
         } else {
             console.log('Chat messages saved to chat_messages.csv');
+        }
+    });
+}
+
+function saveIpAddress(username, ip) {
+    const ipContent = `${username},${ip}\n`;
+    fs.appendFile('ip_addresses.csv', ipContent, (err) => {
+        if (err) {
+            console.error('Error writing to CSV file:', err);
+        } else {
+            console.log('IP address saved to ip_addresses.csv');
         }
     });
 }

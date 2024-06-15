@@ -1,9 +1,13 @@
 const socket = io();
 let usernameSet = false;
 
-document.getElementById('username-input').addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-        joinChat();
+document.addEventListener('DOMContentLoaded', (event) => {
+    const username = localStorage.getItem('username');
+    if (username) {
+        socket.username = username;
+        socket.emit('join', username);
+        usernameSet = true;
+        document.getElementById('message-input').removeAttribute('disabled');
     }
 });
 
@@ -15,20 +19,9 @@ document.getElementById('message-input').addEventListener('keydown', (event) => 
     }
 });
 
-function joinChat() {
-    const username = document.getElementById('username-input').value;
-    if (username) {
-        socket.username = username;
-        socket.emit('join', username);
-        document.getElementById('username-input').style.display = 'none';
-        usernameSet = true;
-        document.getElementById('message-input').removeAttribute('disabled');
-    }
-}
-
 function sendMessage() {
     if (!usernameSet) {
-        alert("Please create a username before you can chat.");
+        alert("Please log in before you can chat.");
         return;
     }
     const input = document.getElementById('message-input');

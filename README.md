@@ -14,7 +14,7 @@ git clone https://github.com/Mr-joep/live-chat-room.git
 cd live-chat-room
 install npm
 npm init -y
-npm install express socket.io
+npm install express socket.io csv-parser bcrypt
 ```
 ## to start the chat room server 
 ```shell script

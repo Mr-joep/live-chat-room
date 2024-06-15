@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card mt-5">
+            <div class="card-header text-center">
+                <h1>Login</h1>
+            </div>
+            <div class="card-body">
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-username-input">Username</label>
+                        <input type="text" id="login-username-input" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password-input">Password</label>
+                        <input type="password" id="login-password-input" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+                <p class="mt-3">Don't have an account? <a href="#" id="register-link">Register here</a></p>
+            </div>
+        </div>
+    </div>
+    <script src="login.js"></script>
+</body>
+</html>
