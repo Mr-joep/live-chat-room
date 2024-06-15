@@ -84,8 +84,8 @@ app.post('/login', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-    console.log('a user connected');
     const ipAddress = socket.handshake.address; // Capture the IP address of the connected user
+    console.log(`A user connected. IP: ${ipAddress}`);
 
     socket.on('join', (username) => {
         socket.username = username;
@@ -110,7 +110,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        console.log('user disconnected');
+        console.log(`User disconnected. IP: ${ipAddress}`);
         users = users.filter(user => user !== socket.username);
         io.emit('user left', { username: socket.username, users });
     });

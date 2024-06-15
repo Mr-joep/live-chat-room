@@ -117,3 +117,12 @@ function scrollToBottom() {
     const messagesContainer = document.getElementById('messages');
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
+
+function redirectToLogin() {
+    window.location.href = '/login.html';
+}
+
+function loginAsAnonymous() {
+    localStorage.setItem('username', 'anonymous');
+    window.location.reload();
+}

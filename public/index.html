@@ -38,23 +38,5 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="app.js"></script>
     <script src="theme.js"></script>
-    <script>
-        function redirectToLogin() {
-            window.location.href = '/login.html';
-        }
-
-        function loginAsAnonymous() {
-            localStorage.setItem('username', 'anonymous');
-            window.location.reload();
-        }
-
-        document.addEventListener('DOMContentLoaded', (event) => {
-            const username = localStorage.getItem('username');
-            if (username) {
-                const socket = io();
-                socket.emit('join', username);
-            }
-        });
-    </script>
 </body>
 </html>
