@@ -14,8 +14,8 @@
                 <h1 id="chat-room-title">Live Chat Room</h1>
             </div>
             <div class="card-body">
-                <button class="btn btn-primary mb-3" onclick="window.location.href='/login.html'">Login</button>
-                <button class="btn btn-secondary mb-3" onclick="joinAsAnonymous()">Login as Anonymous</button>
+                <button class="btn btn-primary mb-3" onclick="redirectToLogin()">Login</button>
+                <button class="btn btn-secondary mb-3" onclick="loginAsAnonymous()">Login as Anonymous</button>
                 <ul id="messages" class="list-group"></ul>
                 <input id="message-input" class="form-control mt-3" placeholder="Type a message..." autocomplete="off" />
                 <button class="btn btn-primary mt-2" onclick="sendMessage()">Send</button>
@@ -39,62 +39,22 @@
     <script src="app.js"></script>
     <script src="theme.js"></script>
     <script>
-        const socket = io();
-
-        function joinAsAnonymous() {
-            const username = 'Anonymous';
-            socket.emit('join', username);
+        function redirectToLogin() {
+            window.location.href = '/login.html';
         }
 
-        socket.on('error', (message) => {
-            alert(message);
+        function loginAsAnonymous() {
+            localStorage.setItem('username', 'anonymous');
+            window.location.reload();
+        }
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const username = localStorage.getItem('username');
+            if (username) {
+                const socket = io();
+                socket.emit('join', username);
+            }
         });
-
-        socket.on('user joined', (data) => {
-            updateUsersList(data.users);
-        });
-
-        socket.on('user left', (data) => {
-            updateUsersList(data.users);
-        });
-
-        function updateUsersList(users) {
-            const usersList = document.getElementById('users-list');
-            usersList.innerHTML = '';
-            users.forEach(user => {
-                const li = document.createElement('li');
-                li.className = 'list-group-item';
-                li.textContent = user;
-                usersList.appendChild(li);
-            });
-        }
-
-        function sendMessage() {
-            const input = document.getElementById('message-input');
-            const message = input.value;
-            socket.emit('chat message', message);
-            input.value = '';
-        }
-
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const imageData = e.target.result;
-                socket.emit('image message', { image: imageData, username: socket.username });
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function handleVideoUpload(event) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const videoData = e.target.result;
-                socket.emit('video message', { video: videoData, username: socket.username });
-            };
-            reader.readAsDataURL(file);
-        }
     </script>
 </body>
 </html>
